@@ -1,0 +1,19 @@
+﻿# Server Connection Sequence
+
+1. Client conencts to server over UDP
+2. Network lib handshakes
+3. Connection is added as peer to security lobby
+4. Security Lobby begins authentication and authorization
+	4.1 IP Ban check
+	4.2 Send authentication request
+	4.3 Add reverse DNS lookup job to thread pool.
+5. If any authentication or authorization check fails, client is flagged as banned and disconnected
+6. When all checks have passed, client is passed to next available regular Lobby
+7. Regular lobby lists all rooms.
+	7.1 Client may create a room
+8. When client selects a room, connection is passed to room handler.
+
+
+## Notes
+All client connections contain a PeerHandler object that deals with reading messages. Each handler only deals with messages it cares about, all others are ignored.
+Peers can be traded from one handler to another with out disconnection since inbound packets are allways reouted to the current handler.
