@@ -107,7 +107,8 @@ namespace Server.Lobby
 				{
 					if(peer.GetAttributeD(IdentificationAttribute) == 1)
 						peer.SetAttribute(IdentificationAttribute, 2);
-					// start authentication job
+
+                    AuthProcessor.PushAuthLookup(peer, string.Empty, authMessage.UserID, authMessage.AuthenticationToken);
 				}
 
 				return;
