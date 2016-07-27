@@ -11,7 +11,6 @@ namespace NetworkingMessages.Messages.Connection
 {
 	public class RequestClientVersionMessage : NetworkMessage
 	{
-
 		public static readonly RequestClientVersionMessage Request = new RequestClientVersionMessage();
 	}
 }

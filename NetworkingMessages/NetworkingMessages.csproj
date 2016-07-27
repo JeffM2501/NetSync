@@ -43,8 +43,14 @@
     <Compile Include="MessageFactory.cs" />
     <Compile Include="Messages\Authentication\AuthenticationMessage.cs" />
     <Compile Include="Messages\Authentication\RequestAuthentication.cs" />
+    <Compile Include="Messages\ClientState\SetClientState.cs" />
     <Compile Include="Messages\Connection\ClientVersionMessage.cs" />
     <Compile Include="Messages\Connection\RequestClientVersionMessage.cs" />
+    <Compile Include="Messages\Lobby\Chat\ChatMemberStatusMessage.cs" />
+    <Compile Include="Messages\Lobby\Chat\SendChatMessage.cs" />
+    <Compile Include="Messages\Lobby\JoinRoomMessage.cs" />
+    <Compile Include="Messages\Lobby\RequestRoomListUpdateMessage.cs" />
+    <Compile Include="Messages\Lobby\RoomListUpdateMessage.cs" />
     <Compile Include="Messages\NetworkMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

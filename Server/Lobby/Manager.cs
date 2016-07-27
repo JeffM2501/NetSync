@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using NetworkingMessages.Messages.ClientState;
+
 using Lidgren.Network;
 
 using Server.Host;
@@ -14,7 +16,7 @@ namespace Server.Lobby
     {
         private static SecurityLobby SecurityAlcove = new SecurityLobby();
 
-        private static LobbyInstance CurrentLobby = new LobbyInstance();
+        private static LobbyInstance CurrentLobby = new GameLobby();
         private static List<LobbyInstance> ActiveLobbies = new List<LobbyInstance>();
 
         static Manager()
@@ -28,6 +30,7 @@ namespace Server.Lobby
             p.Handler = SecurityAlcove;
             p.SocketConnection = connection;
 
+            p.SendMessage(SetClientState.ConnectingState);
 			// TODO spam checks
 
             // assign them to the security check lobby, they will be transfered when validated
@@ -72,6 +75,13 @@ namespace Server.Lobby
             SecurityAlcove.Update();
             foreach (var l in ActiveLobbies)
                 l.Update();
+        }
+
+        public static void Shutdown()
+        {
+            SecurityAlcove.Shutdown();
+            foreach (var l in ActiveLobbies)
+                l.Shutdown();
         }
     }
 }

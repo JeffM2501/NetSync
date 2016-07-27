@@ -21,6 +21,9 @@ namespace Server.Host
         public PeerHandler Handler = null;
         public NetConnection SocketConnection = null;
 
+        public string DisplayName = string.Empty;
+        public string UserID = string.Empty;
+
         private Dictionary<string, object> Attributes = new Dictionary<string, object>();
         private Dictionary<string, double> AttributeNumbers = new Dictionary<string, double>();
 
@@ -102,7 +105,12 @@ namespace Server.Host
             get { return (SocketConnection?.RemoteUniqueIdentifier ?? long.MinValue); }
         }
 
-		public void SendMessage(NetworkingMessages.Messages.NetworkMessage msg, NetDeliveryMethod method, int channel)
+        public void SendMessage(NetworkingMessages.Messages.NetworkMessage msg)
+        {
+            SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 1);
+        }
+
+        public void SendMessage(NetworkingMessages.Messages.NetworkMessage msg, NetDeliveryMethod method, int channel)
 		{
 			if(SocketConnection == null)
 				return;

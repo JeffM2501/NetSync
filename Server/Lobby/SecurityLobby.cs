@@ -8,6 +8,7 @@ using System.Net;
 using Lidgren.Network;
 using NetworkingMessages.Messages.Connection;
 using NetworkingMessages.Messages.Authentication;
+using NetworkingMessages.Messages.ClientState;
 
 using Server.Host;
 using Server.Security;
@@ -34,7 +35,7 @@ namespace Server.Lobby
             Name = "Security";
         }
 
-        public void Shutdown()
+        public override void Shutdown()
         {
             DNSProcessor.Shutdown();
             AuthProcessor.Shutdown();
@@ -44,9 +45,13 @@ namespace Server.Lobby
         {
             base.AddPeer(peer);
 
+            peer.SendMessage(SetClientState.AuthState);
+
             peer.SetAttribute(AuthorizationAttribute, 0);
             peer.SetAttribute(AuthorizationCompleteAttribute, false);
 
+            peer.UserID = string.Empty;
+            peer.DisplayName = string.Empty;
 
             if (peer.GetAttributeB(BannedAttribute))
 				DisconnectPeer("Previously Banned", peer);
@@ -79,11 +84,9 @@ namespace Server.Lobby
 
 		protected ClientVersionMessage ServerVersionMessage = new ClientVersionMessage();
 
-		public override void PeerReceiveData(NetIncomingMessage msg, Peer peer)
+		public override void PeerReceiveMessage(NetworkingMessages.Messages.NetworkMessage msg, Peer peer)
         {
-			NetworkingMessages.Messages.NetworkMessage inMsg = NetworkingMessages.MessageFactory.ParseMessage(msg);
-
-			ClientVersionMessage versMsg = inMsg as ClientVersionMessage;
+			ClientVersionMessage versMsg = msg as ClientVersionMessage;
 			if (versMsg != null)
 			{
 				if(ServerVersionMessage.ClientProduct != versMsg.ClientProduct || ServerVersionMessage.ClientProtocol != versMsg.ClientProtocol )
@@ -98,7 +101,7 @@ namespace Server.Lobby
 				return;
 			}
 
-			AuthenticationMessage authMessage = inMsg as AuthenticationMessage;
+			AuthenticationMessage authMessage = msg as AuthenticationMessage;
 			if(authMessage != null)
 			{
 				if(authMessage.AuthenticationToken == string.Empty || authMessage.UserID == string.Empty)
@@ -157,6 +160,8 @@ namespace Server.Lobby
                 if (p != null)
                 {
                     // for now just accept it; TODO, check the results
+                    p.UserID = autJob.UserID;
+                    p.DisplayName = "Player_" + new Random().Next().ToString();
                     p.SetAttribute(IdentificationAttribute, 3);
                 }
 

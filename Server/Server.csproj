@@ -45,11 +45,14 @@
   <ItemGroup>
     <Compile Include="Host\Peer.cs" />
     <Compile Include="Host\ServerHost.cs" />
+    <Compile Include="Lobby\GameLobby.cs" />
     <Compile Include="Lobby\LobbyInstance.cs" />
     <Compile Include="Lobby\Manager.cs" />
     <Compile Include="Lobby\SecurityLobby.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Room\RoomInstance.cs" />
+    <Compile Include="Room\RoomManager.cs" />
     <Compile Include="Security\AuthenticationProcessor.cs" />
     <Compile Include="Security\BanList.cs" />
     <Compile Include="Security\DNSLookupProcessor.cs" />
@@ -68,9 +71,7 @@
       <Name>NetworkingMessages</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Room\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

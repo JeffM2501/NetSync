@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 using Lidgren.Network;
 
-using Server.Lobby;
-
 namespace Server.Host
 {
     internal class ServerHost
@@ -38,6 +36,7 @@ namespace Server.Host
 
         public void Shutdown()
         {
+            Lobby.Manager.Shutdown();
             SocketServer.Shutdown("Closing");
             SocketServer = null;
         }
@@ -78,9 +77,13 @@ namespace Server.Host
 
         public void ProcessSockets()
         {
+            Peer peer = null;
             NetIncomingMessage im;
             while ((im = SocketServer.ReadMessage()) != null)
             {
+                long id = im.SenderConnection.RemoteUniqueIdentifier;
+                peer = null;
+
                 switch (im.MessageType)
                 {
                     case NetIncomingMessageType.DebugMessage:
@@ -102,20 +105,46 @@ namespace Server.Host
                                 Connected = true;
 
                             AddLogLine("Remote hail: " + im.SenderConnection.RemoteHailMessage.ReadString());
-                            var peer = Server.Lobby.Manager.AcceptPeer(im.SenderConnection);
+                            peer = Lobby.Manager.AcceptPeer(im.SenderConnection);
                             if (peer == null)
                                 im.SenderConnection.Disconnect("Denied");
+                            else
+                            {
+                                lock (ConnectedPeers)
+                                    ConnectedPeers.Add(im.SenderConnection.RemoteUniqueIdentifier, peer);
+                            }
 
                         }
                         else if (status == NetConnectionStatus.Disconnected)
                         {
-                            lock (Locker)
-                                Connected = false;
+                            peer = ConnectedPeers.ContainsKey(id) ? ConnectedPeers[id] : null;
+
+                            if (peer == null)   // not one of ours
+                                return;
+
+                            // tell our handler we poofed
+                            if (peer.Handler != null)
+                                peer.Handler.PeerDisconnected(reason, peer);
+
+                            lock (ConnectedPeers)
+                            {
+                                Connected = ConnectedPeers.Count > 0;
+                                ConnectedPeers.Remove(im.SenderConnection.RemoteUniqueIdentifier);
+                            }
                         }
                         break;
                     case NetIncomingMessageType.Data:
-                        //    AddInboundMessage(NetworkMessageManager.Deserialize(im));
+
+                        peer = ConnectedPeers.ContainsKey(id) ? ConnectedPeers[id] : null;
+
+                        if (peer == null || peer.Handler == null)   // not one of ours
+                            return;
+
+                        // tell our handler we got some data
+                        peer.Handler.PeerReceiveData(im, peer);
+
                         break;
+
                     default:
                         AddLogLine("Unhandled type: " + im.MessageType + " " + im.LengthBytes + " bytes " + im.DeliveryMethod + "|" + im.SequenceChannel);
                         break;
