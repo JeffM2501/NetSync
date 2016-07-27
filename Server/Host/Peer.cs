@@ -10,9 +10,11 @@ namespace Server.Host
 {
     public interface PeerHandler
     {
-        void ReceiveData(NetIncomingMessage msg, Peer peer);
-        void Disconnected(string reason, Peer peer);
-    }
+        void PeerReceiveData(NetIncomingMessage msg, Peer peer);
+        void PeerDisconnected(string reason, Peer peer);
+
+		void DisconnectPeer(string reason, Peer peer);
+	}
 
     public class Peer
     {
@@ -95,9 +97,9 @@ namespace Server.Host
             return GetAttributeD(name) != 0;
         }
 
-        public int ID
+        public long ID
         {
-            get { return (int)(SocketConnection?.RemoteUniqueIdentifier ?? int.MinValue); }
+            get { return (SocketConnection?.RemoteUniqueIdentifier ?? long.MinValue); }
         }
     }
 }

@@ -28,6 +28,8 @@ namespace Server.Lobby
             p.Handler = SecurityAlcove;
             p.SocketConnection = connection;
 
+			// TODO spam checks
+
             // assign them to the security check lobby, they will be transfered when validated
             SecurityAlcove.AddPeer(p);
 

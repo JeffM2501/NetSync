@@ -50,7 +50,13 @@ namespace Server.Lobby
 
                 DNSProcessThreads.Clear();
             }
-        }
+
+			lock(PendingDNSLookups)
+				PendingDNSLookups.Clear();
+
+			lock(CompletedDNSLookups)
+				CompletedDNSLookups.Clear();
+		}
 
         public override void AddPeer(Peer peer)
         {
@@ -59,8 +65,8 @@ namespace Server.Lobby
             peer.SetAttribute(AuthorizationAttribute, 0);
 
             if (peer.GetAttributeB(BannedAttribute))
-                peer.SocketConnection.Disconnect("Banned");
-            else
+				DisconnectPeer("Previously Banned", peer);
+			else
             {
                 var ban = Bans.GetIPBan(peer.SocketConnection.RemoteEndPoint.Address.ToString());
                 if (ban == null)
@@ -68,20 +74,24 @@ namespace Server.Lobby
                 else
                 {
                     peer.SetAttribute(BannedAttribute, true);
-                    peer.SocketConnection.Disconnect(ban.Reason);
+					DisconnectPeer(ban.Reason, peer);
+					return;
                 }
 
-                // start a job to validate the host mask and authentication status
-
-            }
+				PushDNSLookup(peer);
+			}
         }
 
-        protected override void PeerDisconnected(string reason, Peer peer)
+        public override void PeerDisconnected(string reason, Peer peer)
         {
-            // kill any lookup jobs we have
-        }
+			// kill any lookup jobs we have for that peer
 
-        protected override void PeerReceiveData(NetIncomingMessage msg, Peer peer)
+			lock(PendingDNSLookups)
+				PendingDNSLookups.RemoveAll(x => x.PeerID == peer.ID);
+
+		}
+
+		public override void PeerReceiveData(NetIncomingMessage msg, Peer peer)
         {
             // only check for messages we know unauthorized supplicant can send
         }

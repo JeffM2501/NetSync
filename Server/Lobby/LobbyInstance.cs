@@ -15,17 +15,21 @@ namespace Server.Lobby
 
         public Dictionary<long, Peer> LobbyPlayers = new Dictionary<long, Peer>();
 
-        void PeerHandler.Disconnected(string reason, Peer peer)
+		public virtual void PeerDisconnected(string reason, Peer peer)
         {
-            PeerDisconnected(reason, peer);
+			LobbyPlayers.Remove(peer.SocketConnection.RemoteUniqueIdentifier);
         }
 
-        void PeerHandler.ReceiveData(NetIncomingMessage msg, Peer peer)
+        public virtual void PeerReceiveData(NetIncomingMessage msg, Peer peer)
         {
-            PeerReceiveData(msg, peer);
         }
 
-        public virtual void AddPeer(Peer peer)
+		public virtual void DisconnectPeer(string reason, Peer peer)
+		{
+			peer.SocketConnection.Disconnect(reason);
+		}
+
+		public virtual void AddPeer(Peer peer)
         {
             lock (LobbyPlayers)
                 LobbyPlayers.Add(peer.SocketConnection.RemoteUniqueIdentifier,peer);
@@ -39,17 +43,6 @@ namespace Server.Lobby
                     return LobbyPlayers[id];
                 return null;
             }
-        }
-
-
-        protected virtual void PeerDisconnected(string reason, Peer peer)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected virtual void PeerReceiveData(NetIncomingMessage msg, Peer peer)
-        {
-            throw new NotImplementedException();
         }
 
         public virtual void Update()
