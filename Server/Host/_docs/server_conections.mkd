@@ -11,6 +11,7 @@
 6. When all checks have passed, client is passed to next available regular Lobby
 7. Regular lobby lists all rooms.
 	7.1 Client may create a room
+	7.2 Client may chat to everyone in the game lobby
 8. When client selects a room, connection is passed to room handler.
 
 
