@@ -48,6 +48,7 @@
     <Compile Include="Messages\Connection\RequestClientVersionMessage.cs" />
     <Compile Include="Messages\Lobby\Chat\ChatMemberStatusMessage.cs" />
     <Compile Include="Messages\Lobby\Chat\SendChatMessage.cs" />
+    <Compile Include="Messages\Lobby\CreateRoomMessage.cs" />
     <Compile Include="Messages\Lobby\JoinRoomMessage.cs" />
     <Compile Include="Messages\Lobby\RequestRoomListUpdateMessage.cs" />
     <Compile Include="Messages\Lobby\RoomListUpdateMessage.cs" />

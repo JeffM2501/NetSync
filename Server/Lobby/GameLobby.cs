@@ -18,6 +18,29 @@ namespace Server.Lobby
 {
     public class GameLobby : LobbyInstance
     {
+        public GameLobby() : base()
+        {
+            RoomManager.RoomAdded += RoomManager_RoomChanged;
+            RoomManager.RoomUpdated += RoomManager_RoomChanged;
+            RoomManager.RoomRemoved += RoomManager_RoomRemoved;
+        }
+
+        private void RoomManager_RoomRemoved(object sender, RoomManager.RoomEventArgs e)
+        {
+            RoomListUpdateMessage msg = new RoomListUpdateMessage();
+            msg.RoomID = e.AffectedRoom.ID;
+            msg.RoomName = string.Empty;
+            SendToAll(msg);
+        }
+
+        private void RoomManager_RoomChanged(object sender, RoomManager.RoomEventArgs e)
+        {
+            RoomListUpdateMessage msg = new RoomListUpdateMessage();
+            msg.RoomID = e.AffectedRoom.ID;
+            msg.RoomName = e.AffectedRoom.Name;
+            SendToAll(msg);
+        }
+
         public override void AddPeer(Peer peer)
         {
             base.AddPeer(peer);
@@ -68,6 +91,17 @@ namespace Server.Lobby
                     RemovePeer(peer);
                     room.AddPlayer(peer);
                 }
+
+                return;
+            }
+
+            CreateRoomMessage create = msg as CreateRoomMessage;
+            if(create != null && create.RoomName != string.Empty)
+            {
+                RoomInstance newRoom = new RoomInstance();
+                newRoom.Name = create.RoomName;
+                RoomManager.AddRoom(newRoom);
+                return;
             }
         }
 
