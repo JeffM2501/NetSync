@@ -22,22 +22,12 @@ namespace Server.Lobby
         public static string AuthorizationAttribute = "SecurityAuthStatus";
         public static string BannedAttribute = "SecuityBanned";
 
+        public static string AuthorizationCompleteAttribute = "SecuityCheckAuthorized";
+
         public BanList Bans = new BanList();
 
-        public class DNSLookupJob
-        {
-            public long PeerID = long.MaxValue;
-            public IPAddress Address = null;
-
-            public IPHostEntry HostInfo = null;
-        }
-
-        private List<DNSLookupJob> PendingDNSLookups = new List<DNSLookupJob>();
-        private List<DNSLookupJob> CompletedDNSLookups = new List<DNSLookupJob>();
-
-        public static int MaxDNSThreds = 2;
-
-        private List<Thread> DNSProcessThreads = new List<Thread>();
+        protected AuthenticationProcessor AuthProcessor = new AuthenticationProcessor();
+        protected DNSLookupProcessor DNSProcessor = new DNSLookupProcessor();
 
         public SecurityLobby()
         {
@@ -46,26 +36,17 @@ namespace Server.Lobby
 
         public void Shutdown()
         {
-            lock(DNSProcessThreads)
-            {
-                foreach (var t in DNSProcessThreads)
-                    t.Abort();
-
-                DNSProcessThreads.Clear();
-            }
-
-			lock(PendingDNSLookups)
-				PendingDNSLookups.Clear();
-
-			lock(CompletedDNSLookups)
-				CompletedDNSLookups.Clear();
-		}
+            DNSProcessor.Shutdown();
+            AuthProcessor.Shutdown();
+        }
 
         public override void AddPeer(Peer peer)
         {
             base.AddPeer(peer);
 
             peer.SetAttribute(AuthorizationAttribute, 0);
+            peer.SetAttribute(AuthorizationCompleteAttribute, false);
+
 
             if (peer.GetAttributeB(BannedAttribute))
 				DisconnectPeer("Previously Banned", peer);
@@ -81,7 +62,7 @@ namespace Server.Lobby
 					return;
                 }
 
-				PushDNSLookup(peer);
+				DNSProcessor.PushDNSLookup(peer);
 
 				peer.SetAttribute(IdentificationAttribute, 0);
 				peer.SendMessage(RequestClientVersionMessage.Request, NetDeliveryMethod.ReliableOrdered,1);
@@ -90,12 +71,11 @@ namespace Server.Lobby
 
         public override void PeerDisconnected(string reason, Peer peer)
         {
-			// kill any lookup jobs we have for that peer
+            // kill any lookup jobs we have for that peer
 
-			lock(PendingDNSLookups)
-				PendingDNSLookups.RemoveAll(x => x.PeerID == peer.ID);
-
-		}
+            DNSProcessor.RemoveAllJobsForPeer(peer);
+            AuthProcessor.RemoveAllJobsForPeer(peer);
+        }
 
 		protected ClientVersionMessage ServerVersionMessage = new ClientVersionMessage();
 
@@ -134,17 +114,20 @@ namespace Server.Lobby
 			}
 		}
 
+        public static int MaxJobsToFinalize = 10;
+
         public override void Update()
         {
             base.Update();
-            CheckForDeadJobs();
+            DNSProcessor.CheckForDeadJobs();
+            AuthProcessor.CheckForDeadJobs();
 
-            int dnsProcessCount = 0;
-            DNSLookupJob job = PopCompletedDNSJob();
+            DNSLookupProcessor.DNSLookupJob job = DNSProcessor.PopCompletedJob();
 
-            while (job != null && dnsProcessCount > MaxDNSThreds)
+            int i = 0;
+            while (job != null && i > MaxJobsToFinalize)
             {
-                dnsProcessCount++;
+                i++;
 
                 Peer p = FindPeer(job.PeerID);
                 if (p != null)
@@ -159,102 +142,39 @@ namespace Server.Lobby
                     }
                 }
 
-                job = PopCompletedDNSJob();
+                job = DNSProcessor.PopCompletedJob();
+            }
+
+            AuthenticationProcessor.AuthenticationJob autJob = AuthProcessor.PopCompletedJob();
+
+            i = 0;
+            while (autJob != null && i > MaxJobsToFinalize)
+            {
+                i++;
+
+                Peer p = FindPeer(autJob.PeerID);
+                if (p != null)
+                {
+                    // for now just accept it; TODO, check the results
+                    p.SetAttribute(IdentificationAttribute, 3);
+                }
+
+                autJob = AuthProcessor.PopCompletedJob();
             }
 
             // check to see if anyone needs a transfer
-        }
 
-        protected DNSLookupJob PopCompletedDNSJob()
-        {
-            DNSLookupJob job = null;
-            lock (CompletedDNSLookups)
+            foreach(var p in LobbyPlayers.Values.ToArray())
             {
-                if (CompletedDNSLookups.Count == 0)
-                    return null;
-
-                job = CompletedDNSLookups[0];
-                CompletedDNSLookups.RemoveAt(0);
-            }
-
-            return job;
-        }
-
-        protected void CheckForDeadJobs()
-        {
-            bool haveThreads = false;
-            lock (DNSProcessThreads)
-                haveThreads = DNSProcessThreads.Count > 0;
-
-            bool haveJobs = false;
-            lock (PendingDNSLookups)
-                haveJobs = PendingDNSLookups.Count > 0;
-
-            if (haveJobs && !haveThreads)
-            {
-                lock (DNSProcessThreads)
-                    StartDNSLookupThread();
-            }
-        }
-
-        protected void PushDNSLookup(Peer peer)
-        {
-            DNSLookupJob job = new DNSLookupJob();
-            job.PeerID = peer.ID;
-            job.Address = peer.SocketConnection.RemoteEndPoint.Address;
-
-            lock (PendingDNSLookups)
-                PendingDNSLookups.Add(job);
-
-            lock (DNSProcessThreads)
-            {
-                if (DNSProcessThreads.Count < MaxDNSThreds)
-                    StartDNSLookupThread();
-            }
-        }
-
-        protected void StartDNSLookupThread()
-        {
-            Thread t = new Thread(new ThreadStart(ProcessDNSJob));
-            t.Start();
-            DNSProcessThreads.Add(t);
-        }
-
-        protected void ProcessDNSJob()
-        {
-            // pull a job off the stack
-            DNSLookupJob myJob = null;
-            lock (PendingDNSLookups)
-            {
-                if (PendingDNSLookups.Count > 0)
+                // if they have passed all the checks
+                if (p.GetAttributeD(AuthorizationAttribute) == 1 && p.GetAttributeD(IdentificationAttribute) == 3 && !p.GetAttributeB(BannedAttribute))
                 {
-                    myJob = PendingDNSLookups[0];
-                    PendingDNSLookups.RemoveAt(0);
+                    // send them on there way
+                    p.SetAttribute(AuthorizationCompleteAttribute, true);
+                    LobbyPlayers.Remove(p.ID);
+
+                    Manager.TransferPeerToLobby(p, string.Empty);   // let the manager put them in a default lobby
                 }
-            }
-
-            while (myJob != null)   // while we have work
-            {
-                myJob.HostInfo = System.Net.Dns.GetHostEntry(myJob.Address);    // look up our data
-
-                lock (CompletedDNSLookups)          // push that sucker to the finished stack
-                    CompletedDNSLookups.Add(myJob);
-
-                myJob = null;
-
-                lock (PendingDNSLookups)    // get the next job
-                {
-                    if (PendingDNSLookups.Count > 0)
-                    {
-                        myJob = PendingDNSLookups[0];
-                        PendingDNSLookups.RemoveAt(0);
-                    }
-                }
-            }
-
-            lock(DNSProcessThreads) // we are done, remove ourselves
-            {
-                DNSProcessThreads.Remove(Thread.CurrentThread);
             }
         }
     }
