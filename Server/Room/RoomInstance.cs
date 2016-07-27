@@ -61,6 +61,11 @@ namespace Server.Room
         public RoomInstance() { }
         public RoomInstance(string name) { Name = name; }
 
+        public virtual void Startup()
+        {
+
+        }
+
         public virtual void AddPlayer(Peer peer)
         {
             Player p = new Player();

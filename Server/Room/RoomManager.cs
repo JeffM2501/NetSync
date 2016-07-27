@@ -12,19 +12,42 @@ namespace Server.Room
 
         private static long LastRoomID = 0;
 
+        public static int MaxRoomCount = 100;
+
+        public class RoomEventArgs : EventArgs
+        {
+            public RoomInstance AffectedRoom = null;
+
+            public RoomEventArgs(RoomInstance r) { AffectedRoom = r; }
+        }
+
+        public static event EventHandler<RoomEventArgs> RoomAdded = null;
+        public static event EventHandler<RoomEventArgs> RoomUpdated = null;
+        public static event EventHandler<RoomEventArgs> RoomRemoved = null;
+
         public static void Init()
         {
             AddRoom(new RoomInstance("Default Game"));
         }
 
-        public static void AddRoom(RoomInstance room)
+        public static long AddRoom(RoomInstance room)
         {
             lock(Rooms)
             {
+                if (Rooms.Count >= (MaxRoomCount - 1))
+                    return long.MinValue;
+
                 LastRoomID++;
                 room.ID = LastRoomID;
+                if (room.Name == string.Empty)
+                    room.Name = "Room_" + room.ID.ToString();
+
                 Rooms.Add(room);
+                room.Startup();
             }
+
+            RoomAdded?.Invoke(room,new RoomEventArgs(room));
+            return room.ID;
         }
 
         public static void RemoveRoom(RoomInstance room)
@@ -32,6 +55,8 @@ namespace Server.Room
             room.Shutdown();
             lock (Rooms)
                 Rooms.Remove(room);
+
+            RoomRemoved?.Invoke(room, new RoomEventArgs(room));
         }
 
         public static List<Tuple<long, string>> GetRoomList()
