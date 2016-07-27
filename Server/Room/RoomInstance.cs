@@ -98,22 +98,70 @@ namespace Server.Room
 
         public virtual void PeerDisconnected(string reason, Peer peer)
         {
-            throw new NotImplementedException();
+            var p = GetPlayerFromPeer(peer);
+            if (p == null)
+                return;
+
+            PushLeaveMessage(p);
+            lock (Players)
+            {
+                if (Players.ContainsKey(peer.ID))
+                    Players.Remove(peer.ID);
+            }
+        }
+
+        protected List<Player> DisconenctingPlayers = new List<Player>();
+
+        protected void PushLeaveMessage(Player p)
+        {
+            lock (DisconenctingPlayers)
+                DisconenctingPlayers.Add(p);
         }
 
         public virtual void DisconnectPeer(string reason, Peer peer)
         {
-            throw new NotImplementedException();
+            peer.SocketConnection.Disconnect(reason);
         }
 
         public virtual void Update()
         {
+            lock (DisconenctingPlayers)
+            {
+                foreach (var p in DisconenctingPlayers)
+                {
+                    // send a disco message
+                }
+                DisconenctingPlayers.Clear();
+            }
+
             // iterate and pop the messages
+            foreach (var p in Players.Values)
+                ProcessPendingPlayerMessages(p);
+
+            // process the world state
+
         }
 
         public virtual void Shutdown()
         {
 
+        }
+
+        public static int MaxMessagsToProcess = 10;
+
+        protected virtual void ProcessPendingPlayerMessages(Player player)
+        {
+            int msgCount = 0;
+
+            Player.InboundMesage msg = player.PopMessage();
+            while (msg != null && msgCount < MaxMessagsToProcess)
+            {
+                msgCount++;
+
+                NetworkingMessages.Messages.NetworkMessage message = msg.Message;
+
+                msg = player.PopMessage();
+            }
         }
     }
 }

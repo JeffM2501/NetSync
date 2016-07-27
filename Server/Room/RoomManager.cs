@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Server.Host;
+
 namespace Server.Room
 {
     public static class RoomManager
@@ -28,6 +30,14 @@ namespace Server.Room
         public static void Init()
         {
             AddRoom(new RoomInstance("Default Game"));
+        }
+
+        public static long CreateRoom(Peer requester, NetworkingMessages.Messages.Lobby.CreateRoomMessage roomPrams)
+        {
+            RoomInstance room = new RoomInstance();
+            room.Name = roomPrams.RoomName;
+
+            return AddRoom(room);
         }
 
         public static long AddRoom(RoomInstance room)

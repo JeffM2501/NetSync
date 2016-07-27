@@ -98,9 +98,7 @@ namespace Server.Lobby
             CreateRoomMessage create = msg as CreateRoomMessage;
             if(create != null && create.RoomName != string.Empty)
             {
-                RoomInstance newRoom = new RoomInstance();
-                newRoom.Name = create.RoomName;
-                RoomManager.AddRoom(newRoom);
+                RoomManager.CreateRoom(peer, create);
                 return;
             }
         }
