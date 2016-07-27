@@ -101,5 +101,12 @@ namespace Server.Host
         {
             get { return (SocketConnection?.RemoteUniqueIdentifier ?? long.MinValue); }
         }
+
+		public void SendMessage(NetworkingMessages.Messages.NetworkMessage msg, NetDeliveryMethod method, int channel)
+		{
+			if(SocketConnection == null)
+				return;
+			SocketConnection.SendMessage(NetworkingMessages.MessageFactory.PackMessage(SocketConnection.Peer.CreateMessage(),msg), method, channel);
+		}
     }
 }

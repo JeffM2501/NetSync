@@ -6,6 +6,9 @@ using System.Threading;
 using System.Net;
 
 using Lidgren.Network;
+using NetworkingMessages.Messages.Connection;
+using NetworkingMessages.Messages.Authentication;
+
 using Server.Host;
 using Server.Security;
 
@@ -79,6 +82,9 @@ namespace Server.Lobby
                 }
 
 				PushDNSLookup(peer);
+
+				peer.SetAttribute(IdentificationAttribute, 0);
+				peer.SendMessage(RequestClientVersionMessage.Request, NetDeliveryMethod.ReliableOrdered,1);
 			}
         }
 
@@ -91,10 +97,42 @@ namespace Server.Lobby
 
 		}
 
+		protected ClientVersionMessage ServerVersionMessage = new ClientVersionMessage();
+
 		public override void PeerReceiveData(NetIncomingMessage msg, Peer peer)
         {
-            // only check for messages we know unauthorized supplicant can send
-        }
+			NetworkingMessages.Messages.NetworkMessage inMsg = NetworkingMessages.MessageFactory.ParseMessage(msg);
+
+			ClientVersionMessage versMsg = inMsg as ClientVersionMessage;
+			if (versMsg != null)
+			{
+				if(ServerVersionMessage.ClientProduct != versMsg.ClientProduct || ServerVersionMessage.ClientProtocol != versMsg.ClientProtocol )
+					DisconnectPeer("Incompatible Version", peer);
+				else
+				{
+					if (peer.GetAttributeD(IdentificationAttribute) == 0)
+						peer.SetAttribute(IdentificationAttribute, 1);
+					peer.SendMessage(RequestAuthentication.Request, NetDeliveryMethod.ReliableOrdered, 1);
+				}
+
+				return;
+			}
+
+			AuthenticationMessage authMessage = inMsg as AuthenticationMessage;
+			if(authMessage != null)
+			{
+				if(authMessage.AuthenticationToken == string.Empty || authMessage.UserID == string.Empty)
+					DisconnectPeer("Invalid Authentication", peer);
+				else
+				{
+					if(peer.GetAttributeD(IdentificationAttribute) == 1)
+						peer.SetAttribute(IdentificationAttribute, 2);
+					// start authentication job
+				}
+
+				return;
+			}
+		}
 
         public override void Update()
         {

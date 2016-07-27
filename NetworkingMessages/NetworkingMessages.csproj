@@ -4,17 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{9A391FDE-596D-434E-9545-F5AAD2905F45}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{212628D8-29F5-44EB-A8AE-9135706A326E}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Server</RootNamespace>
-    <AssemblyName>Server</AssemblyName>
+    <RootNamespace>NetworkingMessages</RootNamespace>
+    <AssemblyName>NetworkingMessages</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -24,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -43,31 +40,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Host\Peer.cs" />
-    <Compile Include="Host\ServerHost.cs" />
-    <Compile Include="Lobby\LobbyInstance.cs" />
-    <Compile Include="Lobby\Manager.cs" />
-    <Compile Include="Lobby\SecurityLobby.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="MessageFactory.cs" />
+    <Compile Include="Messages\Authentication\AuthenticationMessage.cs" />
+    <Compile Include="Messages\Authentication\RequestAuthentication.cs" />
+    <Compile Include="Messages\Connection\ClientVersionMessage.cs" />
+    <Compile Include="Messages\Connection\RequestClientVersionMessage.cs" />
+    <Compile Include="Messages\NetworkMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Security\BanList.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <None Include="Host\_docs\server_conections.mkd" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\Lidgren.Network\Lidgren.Network.csproj">
       <Project>{49ba1c69-6104-41ac-a5d8-b54fa9f696e8}</Project>
       <Name>Lidgren.Network</Name>
     </ProjectReference>
-    <ProjectReference Include="..\NetworkingMessages\NetworkingMessages.csproj">
-      <Project>{212628d8-29f5-44eb-a8ae-9135706a326e}</Project>
-      <Name>NetworkingMessages</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Room\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
