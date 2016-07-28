@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="MessageFactory.cs" />
     <Compile Include="Messages\Authentication\AuthenticationMessage.cs" />
+    <Compile Include="Messages\Authentication\AuthenticationResponceMessagecs.cs" />
     <Compile Include="Messages\Authentication\RequestAuthentication.cs" />
     <Compile Include="Messages\ClientState\SetClientState.cs" />
     <Compile Include="Messages\Connection\ClientVersionMessage.cs" />

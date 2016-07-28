@@ -12,6 +12,8 @@ namespace NetworkingMessages
 {
 	public static class MessageFactory
 	{
+		public static string ProtocolVersionString = "NetSync.0.0.1";
+
 		private static Dictionary<int, Type> MessageIDs = new Dictionary<int, Type>();
 
 		static MessageFactory()

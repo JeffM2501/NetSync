@@ -47,6 +47,12 @@ namespace Server.Lobby
 
             peer.SendMessage(SetClientState.LobbyState);
 
+			foreach(var p in LobbyPlayers.Values)
+			{
+				if (p != peer)
+					peer.SendMessage(new ChatMemberStatusMessage(p.DisplayName, ChatMemberStatusMessage.StatusTypes.Joined));
+			}
+
             SendToAll(new ChatMemberStatusMessage(peer.DisplayName, ChatMemberStatusMessage.StatusTypes.Joined));
             SendRoomList(peer);
         }

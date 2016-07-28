@@ -10,8 +10,6 @@ namespace Server.Host
 {
     internal class ServerHost
     {
-        public static string PeerConfigName = "NetSync.0.0.1";
-
         NetServer SocketServer = null;
         int ActualPort = -1;
 
@@ -19,7 +17,7 @@ namespace Server.Host
         {
             if (port == 0)
                 port = new Random().Next(1024, Int16.MaxValue - 10);
-            NetPeerConfiguration config = new NetPeerConfiguration(PeerConfigName);
+            NetPeerConfiguration config = new NetPeerConfiguration(NetworkingMessages.MessageFactory.ProtocolVersionString);
 
             config.AutoFlushSendQueue = true;
             config.MaximumConnections = 200;

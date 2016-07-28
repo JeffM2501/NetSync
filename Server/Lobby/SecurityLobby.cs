@@ -163,7 +163,13 @@ namespace Server.Lobby
                     p.UserID = autJob.UserID;
                     p.DisplayName = "Player_" + new Random().Next().ToString();
                     p.SetAttribute(IdentificationAttribute, 3);
-                }
+
+					AuthenticationResponceMessagecs responce = new AuthenticationResponceMessagecs();
+					responce.UserID = p.UserID;
+					responce.DisplayName = p.DisplayName;
+					responce.Responce = AuthenticationResponceMessagecs.AuthenticationResponces.Accepted;
+					p.SendMessage(responce);
+				}
 
                 autJob = AuthProcessor.PopCompletedJob();
             }
