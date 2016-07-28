@@ -119,9 +119,14 @@ namespace ClientLib
 			public string UserID = string.Empty;
 			public string Token = string.Empty;
 			public string TokenSource = string.Empty;
+
+			public bool SendNow = true;
 		}
 
 		public event EventHandler<AuthenticationCredentialsEventArgs> GetAuthenticationCredentials = null;
+
+		public event EventHandler AuthenticationAccepted = null;
+		public event EventHandler AuthenticationRejected = null;
 
 		protected void ProcessAuthenticationMessage(NetworkMessage msg)
 		{
@@ -145,18 +150,46 @@ namespace ClientLib
 			RequestAuthentication authRequestMsg = msg as RequestAuthentication;
 			if(authRequestMsg != null)
 			{
-				AuthenticationMessage myAuth = new AuthenticationMessage();
+				SendAuthentication();
+				return;
+			}
 
-				AuthenticationCredentialsEventArgs args = new AuthenticationCredentialsEventArgs();
-				GetAuthenticationCredentials?.Invoke(this, args);
 
-				myAuth.UserID = args.UserID;
-				myAuth.AuthenticationToken = args.Token;
-				myAuth.AuthenticationSourceToken = args.TokenSource;
+			AuthenticationResponceMessagecs authResponce = msg as AuthenticationResponceMessagecs;
+			if(authResponce != null)
+			{
+				LastAuthenticationMessage = authResponce;
 
-				SendMessage(myAuth);
+				if(LastAuthenticationMessage.Responce == AuthenticationResponceMessagecs.AuthenticationResponces.Accepted)
+					AuthenticationAccepted?.Invoke(this, EventArgs.Empty);
+				else
+				{
+					AuthenticationRejected?.Invoke(this, EventArgs.Empty);
+					SendAuthentication();
+				}
+				return;
 			}
 		}
+
+		protected void SendAuthentication()
+		{
+			AuthenticationMessage myAuth = new AuthenticationMessage();
+
+			AuthenticationCredentialsEventArgs args = new AuthenticationCredentialsEventArgs();
+			if (GetAuthenticationCredentials != null)
+			{
+				GetAuthenticationCredentials.Invoke(this, args);
+				if(!args.SendNow)
+					return;
+			}
+		
+			myAuth.UserID = args.UserID;
+			myAuth.AuthenticationToken = args.Token;
+			myAuth.AuthenticationSourceToken = args.TokenSource;
+
+			SendMessage(myAuth);
+		}
+
 		protected void ProcessLobbyMessage(NetworkMessage msg)
 		{
 			SetClientState stateMsg = msg as SetClientState;
@@ -169,35 +202,9 @@ namespace ClientLib
 				}
 			}
 
-			RequestClientVersionMessage versMsg = msg as RequestClientVersionMessage;
-			if(versMsg != null)
-			{
-				ClientVersionMessage myVersion = new ClientVersionMessage();
-				SendMessage(myVersion);
-				return;
-			}
+			// check for chat and room lists
 
-			RequestAuthentication authRequestMsg = msg as RequestAuthentication;
-			if(authRequestMsg != null)
-			{
-				AuthenticationMessage authMsg = new AuthenticationMessage();
-
-				AuthenticationCredentialsEventArgs args = new AuthenticationCredentialsEventArgs();
-				GetAuthenticationCredentials?.Invoke(this, args);
-
-				authMsg.UserID = args.UserID;
-				authMsg.AuthenticationToken = args.Token;
-				authMsg.AuthenticationSourceToken = args.TokenSource;
-
-				SendMessage(LastAuthenticationMessage);
-				return;
-			}
-
-			AuthenticationResponceMessagecs authResponce = msg as AuthenticationResponceMessagecs;
-			if (authResponce != null)
-			{
-
-			}
+		
 		}
 	}
 }
