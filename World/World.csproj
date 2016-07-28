@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{212628D8-29F5-44EB-A8AE-9135706A326E}</ProjectGuid>
+    <ProjectGuid>{3735CA60-24B9-45BA-AA3F-471D69F55DF4}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NetworkingMessages</RootNamespace>
-    <AssemblyName>NetworkingMessages</AssemblyName>
+    <RootNamespace>World</RootNamespace>
+    <AssemblyName>World</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,30 +40,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MessageFactory.cs" />
-    <Compile Include="Messages\Authentication\AuthenticationMessage.cs" />
-    <Compile Include="Messages\Authentication\RequestAuthentication.cs" />
-    <Compile Include="Messages\ClientState\SetClientState.cs" />
-    <Compile Include="Messages\Connection\ClientVersionMessage.cs" />
-    <Compile Include="Messages\Connection\RequestClientVersionMessage.cs" />
-    <Compile Include="Messages\Gameplay\Players\RemovePlayerMessage.cs" />
-    <Compile Include="Messages\Gameplay\Players\UpdatePlayerInfoMessage.cs" />
-    <Compile Include="Messages\Lobby\Chat\ChatMemberStatusMessage.cs" />
-    <Compile Include="Messages\Lobby\Chat\SendChatMessage.cs" />
-    <Compile Include="Messages\Lobby\CreateRoomMessage.cs" />
-    <Compile Include="Messages\Lobby\JoinLobbyMessage.cs" />
-    <Compile Include="Messages\Lobby\JoinRoomMessage.cs" />
-    <Compile Include="Messages\Lobby\RequestRoomListUpdateMessage.cs" />
-    <Compile Include="Messages\Lobby\RoomListUpdateMessage.cs" />
-    <Compile Include="Messages\NetworkMessage.cs" />
+    <Compile Include="WorldDefinition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup />
-  <ItemGroup>
-    <ProjectReference Include="..\Lidgren.Network\Lidgren.Network.csproj">
-      <Project>{49ba1c69-6104-41ac-a5d8-b54fa9f696e8}</Project>
-      <Name>Lidgren.Network</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

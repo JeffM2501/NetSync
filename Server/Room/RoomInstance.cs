@@ -9,7 +9,9 @@ using Lidgren.Network;
 using Server.Host;
 using NetworkingMessages;
 using NetworkingMessages.Messages;
+using NetworkingMessages.Messages.Lobby;
 using NetworkingMessages.Messages.ClientState;
+using NetworkingMessages.Messages.Gameplay.Players;
 
 namespace Server.Room
 {
@@ -18,9 +20,17 @@ namespace Server.Room
         public long ID = long.MinValue;
         public string Name = string.Empty;
 
+		public readonly int ControlChannel = 1;
+		public readonly int PlayerInfoChannel = 2;
+		public readonly int ChatChannel = 3;
+		public readonly int PositionalUpdateChannel = 4;
+		public readonly int ImportantPlayerUpdateChannel = 5;
+
         public class Player
         {
             public Peer NetPeer = null;
+
+			public int PlayerID = int.MinValue;
 
             public class InboundMesage
             {
@@ -58,6 +68,8 @@ namespace Server.Room
 
         public Dictionary<long, Player> Players = new Dictionary<long, Player>();
 
+		private int LastPlayerID = 0;
+
         public RoomInstance() { }
         public RoomInstance(string name) { Name = name; }
 
@@ -66,17 +78,41 @@ namespace Server.Room
 
         }
 
-        public virtual void AddPlayer(Peer peer)
+		protected void SendToAll(NetworkingMessages.Messages.NetworkMessage message)
+		{
+			SendToAll(message, NetDeliveryMethod.ReliableOrdered, ControlChannel);
+		}
+
+		protected virtual void SendToAll(NetworkingMessages.Messages.NetworkMessage message, NetDeliveryMethod method, int channel)
+		{
+			foreach(var p in Players.Values)
+				p.NetPeer.SendMessage(message, method, channel);
+		}
+
+		public virtual void AddPlayer(Peer peer)
         {
             Player p = new Player();
             p.NetPeer = peer;
             peer.Handler = this;
 
             lock(Players)
-                Players.Add(peer.ID, p);
+			{
+				LastPlayerID++;
+				p.PlayerID = LastPlayerID;
+				Players.Add(peer.ID, p);
+			}
 
             peer.SendMessage(SetClientState.PlayingState);
-        }
+			SendPlayerUpdate(p);
+		}
+
+		protected void SendPlayerUpdate(Player player)
+		{
+			UpdatePlayerInfoMessage msg = new UpdatePlayerInfoMessage();
+			msg.PlayerID = player.PlayerID;
+			msg.DisplayName = player.NetPeer.DisplayName;
+			SendToAll(msg, NetDeliveryMethod.ReliableUnordered, PlayerInfoChannel);
+		}
 
         protected Player GetPlayerFromPeer(Peer peer)
         {
@@ -103,12 +139,17 @@ namespace Server.Room
                 return;
 
             PushLeaveMessage(p);
-            lock (Players)
-            {
-                if (Players.ContainsKey(peer.ID))
-                    Players.Remove(peer.ID);
-            }
-        }
+			RemovePlayer(peer.ID);
+		}
+
+		protected void RemovePlayer(long id)
+		{
+			lock(Players)
+			{
+				if(Players.ContainsKey(id))
+					Players.Remove(id);
+			}
+		}
 
         protected List<Player> DisconenctingPlayers = new List<Player>();
 
@@ -127,11 +168,10 @@ namespace Server.Room
         {
             lock (DisconenctingPlayers)
             {
-                foreach (var p in DisconenctingPlayers)
-                {
-                    // send a disco message
-                }
-                DisconenctingPlayers.Clear();
+				foreach(var p in DisconenctingPlayers)
+					SendPlayerPartMessage(p);
+
+				DisconenctingPlayers.Clear();
             }
 
             // iterate and pop the messages
@@ -141,6 +181,13 @@ namespace Server.Room
             // process the world state
 
         }
+
+		protected virtual void SendPlayerPartMessage(Player p)
+		{
+			RemovePlayerMessage msg = new RemovePlayerMessage();
+			msg.PlayerID = p.PlayerID;
+			SendToAll(msg, NetDeliveryMethod.ReliableUnordered, PlayerInfoChannel);
+		}
 
         public virtual void Shutdown()
         {
@@ -159,6 +206,15 @@ namespace Server.Room
                 msgCount++;
 
                 NetworkingMessages.Messages.NetworkMessage message = msg.Message;
+
+				if (message as JoinLobbyMessage != null)
+				{
+					RemovePlayer(player.NetPeer.ID);
+					SendPlayerPartMessage(player);
+					Lobby.Manager.TransferPeerToLobby(player.NetPeer, (message as JoinLobbyMessage).LobbyName);
+					return; // we are done with them, this should be the last message anyone cares about before the state change, so just ditch em.
+				}
+				
 
                 msg = player.PopMessage();
             }

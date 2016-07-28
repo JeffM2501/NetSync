@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lidgren.Network", "Lidgren.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkingMessages", "NetworkingMessages\NetworkingMessages.csproj", "{212628D8-29F5-44EB-A8AE-9135706A326E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "World", "World\World.csproj", "{3735CA60-24B9-45BA-AA3F-471D69F55DF4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{212628D8-29F5-44EB-A8AE-9135706A326E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{212628D8-29F5-44EB-A8AE-9135706A326E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{212628D8-29F5-44EB-A8AE-9135706A326E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3735CA60-24B9-45BA-AA3F-471D69F55DF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3735CA60-24B9-45BA-AA3F-471D69F55DF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3735CA60-24B9-45BA-AA3F-471D69F55DF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3735CA60-24B9-45BA-AA3F-471D69F55DF4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
