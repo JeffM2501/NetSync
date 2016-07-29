@@ -11,5 +11,8 @@ namespace NetworkingMessages.Messages.Lobby
     public class JoinRoomMessage : NetworkMessage
     {
         public long RoomID = long.MinValue;
-    }
+
+		public JoinRoomMessage() { }
+		public JoinRoomMessage(long id) { RoomID = id; }
+	}
 }

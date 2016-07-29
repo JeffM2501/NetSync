@@ -11,6 +11,7 @@ using NetworkingMessages.Messages;
 using NetworkingMessages.Messages.Connection;
 using NetworkingMessages.Messages.Authentication;
 using NetworkingMessages.Messages.ClientState;
+using NetworkingMessages.Messages.Lobby;
 
 
 namespace ClientLib
@@ -61,6 +62,8 @@ namespace ClientLib
 				case SetClientState.ClientStates.InLobby:
 					JoinedLobby?.Invoke(this, EventArgs.Empty);
 					CurrentLobby = new LobbySession(LastAuthenticationMessage.UserID);
+					CurrentLobby.ChatSent += CurrentLobby_ChatSent;
+					SendMessage(RequestRoomListUpdateMessage.Request);
 					break;
 
 				case SetClientState.ClientStates.Playing:
@@ -73,6 +76,11 @@ namespace ClientLib
 
 			}
 
+		}
+
+		private void CurrentLobby_ChatSent(object sender, LobbySession.ChatMessageEventArgs e)
+		{
+			SendMessage(new NetworkingMessages.Messages.Lobby.Chat.SendChatMessage(e.From,e.ChatText));
 		}
 
 		public static int MaxMessagesPerTick = 100;
@@ -190,6 +198,21 @@ namespace ClientLib
 			SendMessage(myAuth);
 		}
 
+		public void JoinGameRoom(long gameID)
+		{
+			switch( CurrentState)
+			{
+				case SetClientState.ClientStates.InLobby:
+					SendMessage(new JoinRoomMessage(gameID));
+					break;
+
+				case SetClientState.ClientStates.Playing:
+					// TODO, kill our current game and part
+					SendMessage(new JoinRoomMessage(gameID));
+					break;
+			}
+		}
+
 		protected void ProcessLobbyMessage(NetworkMessage msg)
 		{
 			SetClientState stateMsg = msg as SetClientState;
@@ -202,9 +225,9 @@ namespace ClientLib
 				}
 			}
 
-			// check for chat and room lists
+			if(CurrentLobby != null)
+				CurrentLobby.ProcessMessage(msg);
 
-		
 		}
 	}
 }

@@ -34,6 +34,11 @@ namespace Server
                 }
                    
                 gameHost.ProcessSockets();
+
+				var logLine = gameHost.GetLogLine();
+				if(logLine != string.Empty)
+					Console.WriteLine(logLine);
+
                 Thread.Sleep(10);
             }
 

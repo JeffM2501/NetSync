@@ -4,12 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using NetworkingMessages.Messages;
+using NetworkingMessages.Messages.Lobby;
 using NetworkingMessages.Messages.Lobby.Chat;
 
 namespace ClientLib
 {
 	public class LobbySession
 	{
+		public Dictionary<long, string> GameRooms = new Dictionary<long, string>();
+
+		public event EventHandler RoomListUpdated = null;
+
 		public class LobbyUser
 		{
 			public string Name = string.Empty;
@@ -37,14 +43,14 @@ namespace ClientLib
 		public event EventHandler<ChatUserMessageEventArgs> UserJoined = null;
 		public event EventHandler<ChatUserMessageEventArgs> UserLeft = null;
 
-		public event EventHandler UserListSetup= null;
+		public event EventHandler UserListSetup = null;
 
 		public class ChatMessageEventArgs : EventArgs
 		{
 			public string From = string.Empty;
 			public string ChatText = string.Empty;
 
-			public ChatMessageEventArgs(string f, string t) { From = f;  ChatText = t; }
+			public ChatMessageEventArgs(string f, string t) { From = f; ChatText = t; }
 		}
 		public event EventHandler<ChatMessageEventArgs> ChatUpdated = null;
 		public event EventHandler<ChatMessageEventArgs> ChatSent = null;
@@ -55,6 +61,22 @@ namespace ClientLib
 			MyUserName = me;
 		}
 
+		public void ProcessMessage(NetworkMessage msg)
+		{
+			SendChatMessage chat = msg as SendChatMessage;
+			if (chat != null)
+			{
+				ReceiveChatMessage(chat.From, chat.Message);
+				return;
+			}
+
+			if(UpdateChatUser(msg as ChatMemberStatusMessage))
+				return;
+
+			if(UpdateRoomList(msg as RoomListUpdateMessage))
+				return;
+		}
+
 		public void ReceiveChatMessage(string from, string messageText)
 		{
 			LobbyUser user = GetUser(from);
@@ -62,7 +84,7 @@ namespace ClientLib
 			ChatLog.Add(new Tuple<string, string>(from, messageText));
 		}
 
-		public void SendChatMessage(string messageText)
+		public void SendChatText(string messageText)
 		{
 			ChatSent?.Invoke(this, new ChatMessageEventArgs(MyUserName, messageText));
 		}
@@ -87,12 +109,33 @@ namespace ClientLib
 					GotMe = true;
 					UserListSetup?.Invoke(this, EventArgs.Empty);
 				}
-
 			}
 		}
 
-		public void UpdateChatUser(ChatMemberStatusMessage message)
+		public bool UpdateRoomList(RoomListUpdateMessage message)
 		{
+			if(message == null)
+				return false;
+
+			if(message.RoomName != string.Empty)
+			{
+				if(!GameRooms.ContainsKey(message.RoomID))
+					GameRooms.Add(message.RoomID, message.RoomName);
+				else
+					GameRooms[message.RoomID] = message.RoomName;
+			}
+			else if(GameRooms.ContainsKey(message.RoomID))
+				GameRooms.Remove(message.RoomID);
+
+			RoomListUpdated?.Invoke(this, EventArgs.Empty);
+
+			return true;
+		}
+
+		public bool UpdateChatUser(ChatMemberStatusMessage message)
+		{
+			if(message == null)
+				return false;
 			switch(message.Status)
 			{
 				case ChatMemberStatusMessage.StatusTypes.Joined:
@@ -106,6 +149,8 @@ namespace ClientLib
 						UserLeft?.Invoke(this, new ChatUserMessageEventArgs(message.UserName));
 					break;
 			}
+
+			return true;
 		}
 	}
 }

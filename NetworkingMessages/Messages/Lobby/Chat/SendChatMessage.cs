@@ -12,5 +12,8 @@ namespace NetworkingMessages.Messages.Lobby.Chat
     {
         public string From = string.Empty;
         public string Message = string.Empty;
-    }
+
+		public SendChatMessage() { }
+		public SendChatMessage(string f, string m) { From = f;  Message = m; }
+	}
 }

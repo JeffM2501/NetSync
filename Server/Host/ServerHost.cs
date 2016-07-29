@@ -79,7 +79,10 @@ namespace Server.Host
             NetIncomingMessage im;
             while ((im = SocketServer.ReadMessage()) != null)
             {
-                long id = im.SenderConnection.RemoteUniqueIdentifier;
+				long id = long.MinValue;
+				if (im != null && im.SenderConnection != null)
+					id = im.SenderConnection.RemoteUniqueIdentifier;
+
                 peer = null;
 
                 switch (im.MessageType)
