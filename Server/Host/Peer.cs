@@ -37,7 +37,7 @@ namespace Server.Host
 
         public object GetAttribute(string name)
         {
-            if (Attributes.ContainsKey(name))
+            if (!Attributes.ContainsKey(name))
                 return null;
 
             return Attributes[name];
@@ -79,7 +79,7 @@ namespace Server.Host
 
         public double GetAttributeD(string name)
         {
-            if (AttributeNumbers.ContainsKey(name))
+            if (!AttributeNumbers.ContainsKey(name))
                 return 0.0;
 
             return AttributeNumbers[name];

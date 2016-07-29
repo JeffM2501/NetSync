@@ -12,14 +12,19 @@ namespace NetworkingMessages.Messages.ClientState
     {
         public enum ClientStates
         {
-            Connecting,
-            Authenticating,
-            InLobby,
-            Playing,
-            Disconnecting,
+            Connecting = 0,
+            Authenticating = 1,
+            InLobby = 2,
+            Playing = 3,
+            Disconnecting = 4,
         }
 
-        public ClientStates State = ClientStates.Connecting;
+        public byte StateByte = (byte)ClientStates.Connecting;
+        public ClientStates State
+        {
+            get { return (ClientStates)StateByte; }
+            set { StateByte = (byte)value; }
+        }
 
         public SetClientState() { }
         public SetClientState (ClientStates s) { State = s; }

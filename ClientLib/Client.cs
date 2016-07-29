@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 
 using Lidgren.Network;
@@ -42,7 +42,9 @@ namespace ClientLib
 			get { lock(Locker) return Connected; }
 		}
 
-		public void Connect(string host, int port)
+        protected Thread CheckingThread = null;
+
+		public void Connect(string host, int port, bool useNewThred)
 		{
 			ConnectionPort = port;
 			NetPeerConfiguration config = new NetPeerConfiguration(NetworkingMessages.MessageFactory.ProtocolVersionString);
@@ -54,13 +56,30 @@ namespace ClientLib
 			SocketClient.Start();
 			NetOutgoingMessage hail = SocketClient.CreateMessage(NetworkingMessages.MessageFactory.ProtocolVersionString);
 			SocketClient.Connect(host, port, hail);
+
+            CheckingThread = null;
+            if (useNewThred)
+            {
+                CheckingThread = new Thread(new ThreadStart(CheckMessagesForThread));
+                CheckingThread.Start();
+            }
 		}
 
 		public void Shutdown()
 		{
-			SocketClient.Disconnect("Closing");
-			SocketClient = null;
-		}
+            TerminateCheckThread();
+
+            if (SocketClient != null)
+            {
+                SocketClient.Disconnect("Closing");
+                ProcessMessages();
+                Thread.Sleep(1);
+                ProcessMessages();
+            }
+
+            CheckingThread = null;
+            SocketClient = null;
+        }
 
 		private void CheckMessages(object peer)
 		{
@@ -96,6 +115,33 @@ namespace ClientLib
 				return;
 			SocketClient.SendMessage(NetworkingMessages.MessageFactory.PackMessage(SocketClient.CreateMessage(), msg), method, channel);
 		}
+
+
+        private object ExitLocker = new object();
+        private bool ExitFlag = false;
+
+        protected bool ExitCheckThread()
+        {
+            lock (ExitLocker)
+                return ExitFlag;
+        }
+
+        protected void TerminateCheckThread()
+        {
+            lock (ExitLocker)
+                ExitFlag = true;
+        }
+
+        private void CheckMessagesForThread()
+        {
+            while(!ExitCheckThread())
+            {
+                ProcessMessages();
+                Thread.Sleep(10);
+            }
+
+            CheckingThread = null;
+        }
 
 		public void ProcessMessages()
 		{
