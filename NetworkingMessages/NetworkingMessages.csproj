@@ -47,6 +47,7 @@
     <Compile Include="Messages\ClientState\SetClientState.cs" />
     <Compile Include="Messages\Connection\ClientVersionMessage.cs" />
     <Compile Include="Messages\Connection\RequestClientVersionMessage.cs" />
+    <Compile Include="Messages\Gameplay\GameRoomJoinedMessage.cs" />
     <Compile Include="Messages\Gameplay\Players\RemovePlayerMessage.cs" />
     <Compile Include="Messages\Gameplay\Players\UpdatePlayerInfoMessage.cs" />
     <Compile Include="Messages\Lobby\Chat\ChatMemberStatusMessage.cs" />

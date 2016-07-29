@@ -11,6 +11,7 @@ using NetworkingMessages;
 using NetworkingMessages.Messages;
 using NetworkingMessages.Messages.Lobby;
 using NetworkingMessages.Messages.ClientState;
+using NetworkingMessages.Messages.Gameplay;
 using NetworkingMessages.Messages.Gameplay.Players;
 
 namespace Server.Room
@@ -103,7 +104,20 @@ namespace Server.Room
 			}
 
             peer.SendMessage(SetClientState.PlayingState);
-			SendPlayerUpdate(p);
+
+			// tell them WHAT they are playing
+			var joinMsg = new GameRoomJoinedMessage();
+			joinMsg.GameID = ID;
+			joinMsg.GameName = Name;
+			joinMsg.PlayerID = p.PlayerID;
+
+			// these need to go in the same channel as the state change so they get in before normal updates that don't matter
+			peer.SendMessage(joinMsg);
+
+			UpdatePlayerInfoMessage msg = new UpdatePlayerInfoMessage();
+			msg.PlayerID = p.PlayerID;
+			msg.DisplayName = p.NetPeer.DisplayName;
+			SendToAll(msg);
 		}
 
 		protected void SendPlayerUpdate(Player player)

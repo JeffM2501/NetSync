@@ -82,6 +82,8 @@ namespace ClientLib
 			LobbyUser user = GetUser(from);
 			user.ChatLog.Add(messageText);
 			ChatLog.Add(new Tuple<string, string>(from, messageText));
+
+			ChatUpdated?.Invoke(this, new ChatMessageEventArgs(from, messageText));
 		}
 
 		public void SendChatText(string messageText)

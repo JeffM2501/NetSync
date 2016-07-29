@@ -45,10 +45,12 @@ namespace ClientLib
 			{
 				case SetClientState.ClientStates.InLobby:
 					LeftLobby?.Invoke(this, EventArgs.Empty);
+					CurrentLobby = null;
 					break;
 
 				case SetClientState.ClientStates.Playing:
 					LeftGame?.Invoke(this, EventArgs.Empty);
+					CurrentGame = null;
 					break;
 			}
 			CurrentState = state;
@@ -67,13 +69,15 @@ namespace ClientLib
 					break;
 
 				case SetClientState.ClientStates.Playing:
+					CurrentGame = new ClientLib.Game.GameSession();
 					JoinedGame?.Invoke(this, EventArgs.Empty);
 					break;
 
 				case SetClientState.ClientStates.Disconnecting:
 					Disconnecting?.Invoke(this, EventArgs.Empty);
+					CurrentGame = null;
+					CurrentLobby = null;
 					break;
-
 			}
 
 		}
@@ -104,6 +108,10 @@ namespace ClientLib
 
 					case SetClientState.ClientStates.InLobby:
 						ProcessLobbyMessage(msg);
+						break;
+
+					case SetClientState.ClientStates.Playing:
+						ProcessGameMessage(msg);
 						break;
 				}
 			}
@@ -228,6 +236,22 @@ namespace ClientLib
 			if(CurrentLobby != null)
 				CurrentLobby.ProcessMessage(msg);
 
+		}
+
+		protected void ProcessGameMessage(NetworkMessage msg)
+		{
+			SetClientState stateMsg = msg as SetClientState;
+			if(stateMsg != null)
+			{
+				if(stateMsg.State == SetClientState.ClientStates.InLobby || stateMsg.State == SetClientState.ClientStates.Playing || stateMsg.State == SetClientState.ClientStates.Disconnecting)
+				{
+					ChangeClientState(stateMsg.State);
+					return;
+				}
+			}
+
+			if(CurrentGame != null)
+				CurrentGame.ProcessMessage(msg);
 		}
 	}
 }

@@ -10,6 +10,8 @@ using Lidgren.Network;
 using NetworkingMessages;
 using NetworkingMessages.Messages;
 
+using ClientLib.Game;
+
 namespace ClientLib
 {
     public partial class Client
@@ -30,6 +32,10 @@ namespace ClientLib
 		protected LobbySession CurrentLobby = null;
 
 		public LobbySession Lobby {  get { return CurrentLobby; } }
+
+		protected GameSession CurrentGame = null;
+
+		public GameSession Game { get { return CurrentGame; } }
 
 		public bool IsConnected
 		{
