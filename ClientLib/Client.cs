@@ -72,9 +72,9 @@ namespace ClientLib
             if (SocketClient != null)
             {
                 SocketClient.Disconnect("Closing");
-                ProcessMessages();
+				ProcessOneMessages();
                 Thread.Sleep(1);
-                ProcessMessages();
+				ProcessOneMessages();
             }
 
             CheckingThread = null;
@@ -83,7 +83,7 @@ namespace ClientLib
 
 		private void CheckMessages(object peer)
 		{
-			ProcessMessages();
+			while(ProcessOneMessages()) ;
 		}
 
 		public event EventHandler HostConnected = null;
@@ -136,17 +136,17 @@ namespace ClientLib
         {
             while(!ExitCheckThread())
             {
-                ProcessMessages();
+				while(ProcessOneMessages()) ;
                 Thread.Sleep(10);
             }
 
             CheckingThread = null;
         }
 
-		public void ProcessMessages()
+		public bool ProcessOneMessages()
 		{
 			NetIncomingMessage im;
-			while(SocketClient != null && (im = SocketClient.ReadMessage()) != null)
+			if(SocketClient != null && (im = SocketClient.ReadMessage()) != null)
 			{
 				switch(im.MessageType)
 				{
@@ -197,7 +197,10 @@ namespace ClientLib
 				}
 				if(SocketClient != null)
 					SocketClient.Recycle(im);
+
+				return true;
 			}
+			return false;
 		}
 	}
 }

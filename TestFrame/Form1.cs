@@ -33,10 +33,13 @@ namespace TestFrame
             Server.Program.LogTextGenerated += Program_LogTextGenerated;
             Server.Program.Main(new List<string>().ToArray());
         }
+		  
+		private List<string> ServerLogLines = new List<string>();
 
         private void Program_LogTextGenerated(object sender, Server.Program.ServerLogEventArgs e)
         {
-            ServerLogText.Text = e.Text + "\r\n" + ServerLogText.Text;
+			lock(ServerLogLines)
+				ServerLogLines.Add(e.Text);
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
@@ -51,11 +54,11 @@ namespace TestFrame
         private void ClientConnect_Click(object sender, EventArgs e)
         {
             GameClient = new Client();
-            GameClient.Connect(ClientConnetionAddress.Text, Server.Program.Port, true);
+            GameClient.Connect(ClientConnetionAddress.Text, Server.Program.Port, false);
             GameClient.HostConnected += GameClient_HostConnected;
             GameClient.HostDisconnected += GameClient_HostDisconnected;
             GameClient.GetAuthenticationCredentials += GameClient_GetAuthenticationCredentials;
-            TickTimer.Start();
+       //     TickTimer.Start();
         }
 
         private void GameClient_GetAuthenticationCredentials(object sender, Client.AuthenticationCredentialsEventArgs e)
@@ -78,7 +81,7 @@ namespace TestFrame
                 ClientLogLines.Add("Disconnected");
             GameClient.Shutdown();
             GameClient = null;
-            TickTimer.Stop();
+          //  TickTimer.Stop();
         }
 
         private void GameClient_HostConnected(object sender, EventArgs e)
@@ -89,16 +92,30 @@ namespace TestFrame
 
         private void TickTimer_Tick(object sender, EventArgs e)
         {
-            if (GameClient != null)
-                GameClient.Update();
+			IdleUpdate();
 
-            lock (ClientLogLines)
-            {
-                foreach (var c in ClientLogLines)
-                    ClientLogOutput.Text = c;
+		}
 
-                ClientLogLines.Clear();
-            }
-        }
+		public void IdleUpdate()
+		{
+			if(GameClient != null)
+				GameClient.Update();
+
+			lock(ClientLogLines)
+			{
+				foreach(var c in ClientLogLines)
+					ClientLogOutput.Text = c;
+
+				ClientLogLines.Clear();
+			}
+
+			lock (ServerLogLines)
+			{
+				foreach(var s in ServerLogLines)
+					ServerLogText.Text = s + "\r\n" + ServerLogText.Text;
+
+				ServerLogLines.Clear();
+			}
+		}
     }
 }

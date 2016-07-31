@@ -91,6 +91,13 @@ namespace ClientLib
 
 		public void Update()
 		{
+			if (CheckingThread == null)
+			{
+				int count = 0;
+				while(ProcessOneMessages() && count < MaxMessagesPerTick)
+					count++;
+			}
+
 			NetworkMessage msg = PopMessage();
 			int i = 0;
 

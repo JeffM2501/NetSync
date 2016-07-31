@@ -8,15 +8,25 @@ namespace TestFrame
 {
     static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        [STAThread]
+		public static Form1 TheForm = null;
+		/// <summary>
+		/// The main entry point for the application.
+		/// </summary>
+		[STAThread]
         static void Main()
         {
+
+			Application.Idle += Application_Idle;
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+			TheForm = new Form1();
+
+			Application.Run(TheForm);
         }
-    }
+
+		private static void Application_Idle(object sender, EventArgs e)
+		{
+			TheForm.IdleUpdate();
+		}
+	}
 }
